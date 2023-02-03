@@ -1,5 +1,9 @@
 # kasanka
 
+### detections_to_tracks.ipynb
+
+Connect frame by frame detections into movement trajectories across time.
+
 ### get-observation-frame-darkness.ipynb
 
 Calculates the average value of the blue channel in each frame of each cameras complete observation (across that camera's clips)
