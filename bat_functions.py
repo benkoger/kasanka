@@ -1,18 +1,24 @@
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy.optimize import linear_sum_assignment
-from scipy import signal
-from sklearn.neighbors import KernelDensity
 import copy
 import os
-import utm
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy import signal
+from scipy.optimize import linear_sum_assignment
+from sklearn.neighbors import KernelDensity
 import rasterio
+
 from CountLine import CountLine
 
-import sys
-sys.path.append('/home/golden/general-detection/functions')
+try:
+    import utm
+except ImportError:
+    print(f"Warning, the utm package is not installed and so won't be imported.",
+          f"You will not be able to use the function latlong_dict_to_utm.")
+    pass
+
 import koger_tracking as ktf
 
 
@@ -684,14 +690,12 @@ def get_bat_accumulation(crossing_frames, obs=None, parameters=None,
 def threshold_short_tracks(raw_track_list, min_length_threshold=2):
     """Only return tracks that are longer than min_length_threshold."""
     
-    track_lengths = []
     track_list = []
     for track_num, track in enumerate(raw_track_list):
         if isinstance(track['track'], list):
             track['track'] = np.array(track['track'])
         track_length = track['track'].shape[0]
         if track_length >= min_length_threshold:
-            track_lengths.append(track['track'].shape[0])
             track_list.append(track)
     return track_list
 
@@ -804,7 +808,7 @@ def get_wingspan(track):
 
 def measure_crossing_bats(track_list, frame_height=None, frame_width=None,
                           count_across=False, count_out=True, num_frames=None, 
-                          with_rects=True):
+                          with_rects=True, ):
     
     """ Find and quantify all tracks that cross middle line.
     
@@ -827,7 +831,7 @@ def measure_crossing_bats(track_list, frame_height=None, frame_width=None,
 
     crossing_track_list = []
 
-    for track_ind, track in enumerate(track_list[:]):
+    for track_ind, track in enumerate(track_list):
         out_result = None
         across_result = None
         if count_out:
@@ -851,19 +855,8 @@ def measure_crossing_bats(track_list, frame_height=None, frame_width=None,
             if with_rects:
                 if not 'rects' in track.keys():
                     track['rects'] = get_rects(track)
-                    
-                min_edge = np.nanmin(track['rects'], 1)
-                min_edge = min_edge[~np.isnan(min_edge)]
-                peaks = signal.find_peaks(max_edge)[0]
-                if len(peaks) != 0:
-                    mean_body = np.nanmean(min_edge[peaks])
-
-
-                else:
-                    mean_body = np.nanmean(max_edge)
 
                 crossing_track_list[-1]['mean_wing'] = get_wingspan(track)
-                crossing_track_list[-1]['mean_body'] = mean_body
 
             
     return crossing_track_list
